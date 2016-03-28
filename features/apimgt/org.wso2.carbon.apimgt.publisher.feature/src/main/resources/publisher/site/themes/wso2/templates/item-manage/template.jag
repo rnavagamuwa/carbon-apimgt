@@ -79,15 +79,13 @@
 <%}%>
 
 </center>
-    <div class="title-section">
-
-        <h2>Manage API: <%= encode.forHtml(api.name) %> : <%= encode.forHtml(api.context) %>&nbsp;
+	<div class="page-header">
+ 		<h2>Manage API: <%= encode.forHtml(api.name) %> : <%= encode.forHtml(api.context) %>&nbsp;
         <% if(api){ %>
-               <button type="button" class="btn btn-default pull-right" onclick="window.location='<%= jagg.url("/info?"+ apiUrlId ) %>'"><i class=" glyphicon glyphicon-list-alt"></i> Go to Overview</button>
+           <button type="button" class="btn btn-default pull-right" onclick="window.location='<%= jagg.url("/info?"+ apiUrlId ) %>'"><i class=" glyphicon glyphicon-list-alt"></i> Go to Overview</button>
         <% } %>
         </h2>
-
-    </div>     
+ 	</div>     
     <div class="content-section shadow-up">
     <div class="content-data">   
     <div class="alert alert-danger" id="addAPIError" style="display:none">
@@ -197,7 +195,7 @@
                             if((api.productionTps && (!"none".equals(api.productionTps))) || (api.sandboxTps && (!"none".equals(api.sandboxTps)))){ %>
                             checked="checked"<%}%>><%=i18n.localize("throttleMsg")%>
                             </label>
-                            <table class="table table-bordered table-striped" id="throttleTable"
+                            <table class="table table-bordered table-striped" id="throttleTable">
                                 <thead>
                                     <tr>
                                         <th></th>
@@ -247,11 +245,12 @@
                 </div>
             <!--Response Caching End -->
 
-                <div class="form-group ">
+                
                 <% mod = jagg.module("api");
-            result = mod.isMultipleTenantsAvailable();
-                var isMultipleTenantsAvailable = result.status;
-            if(api.visibility == "public" && isMultipleTenantsAvailable == true){%>
+            		result = mod.isMultipleTenantsAvailable();
+                	var isMultipleTenantsAvailable = result.status;
+            		if(api.visibility == "public" && isMultipleTenantsAvailable == true){%>
+            			<div class="form-group ">
                         <label class="control-label col-sm-3" for="subscriptions"><%=i18n.localize("subscriptionsTitle")%>:</label>
                         <div class="controls col-sm-8">
                             <% if(api.visibility!="public") {%>
@@ -271,7 +270,7 @@
                             <div id="subscriptions_help" class="hide"><%=i18n.localize("subscriptionHelpMsg")%></div>
                        </div>
 
-                        <br/>
+                        </br>
                            </div>
                                <div class="form-group" id="tenantsDiv" <%if(api.subscriptionAvailability!="specific_tenants"){%>style="display: none;"<%}%>>
                                    <label class="control-label col-sm-3" for="tenants" id="tenantLabel" name="tenantLabel">
@@ -817,5 +816,6 @@
                             }
                               }
                                    </script>
+        </div>
         </div>
 <% }); %>
