@@ -21,9 +21,9 @@ package org.wso2.carbon.apimgt.impl.utils;
 import com.google.gson.Gson;
 
 import org.apache.axis2.engine.AxisConfiguration;
-import org.apache.axis2.util.JavaUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -137,6 +137,9 @@ import org.wso2.carbon.user.core.UserRealm;
 import org.wso2.carbon.user.core.config.RealmConfigXMLProcessor;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.mgt.UserMgtConstants;
+import org.wso2.carbon.user.mgt.stub.UserAdminStub;
+import org.wso2.carbon.user.mgt.stub.UserAdminUserAdminException;
+import org.wso2.carbon.user.mgt.stub.types.carbon.FlaggedName;
 import org.wso2.carbon.utils.CarbonUtils;
 import org.wso2.carbon.utils.ConfigurationContextService;
 import org.wso2.carbon.utils.FileUtil;
@@ -1636,9 +1639,6 @@ public final class APIUtil {
         } catch (RegistryException e) {
             log.error(APIConstants.MSG_TIER_RET_ERROR, e);
             throw new APIManagementException(APIConstants.MSG_TIER_RET_ERROR, e);
-        } catch (XMLStreamException e) {           
-            log.error(APIConstants.MSG_MALFORMED_XML_ERROR, e);
-            throw new APIManagementException(APIConstants.MSG_MALFORMED_XML_ERROR, e);
         }
     }
 
@@ -1658,9 +1658,6 @@ public final class APIUtil {
         } catch (RegistryException e) {
             log.error(APIConstants.MSG_TIER_RET_ERROR, e);
             throw new APIManagementException(APIConstants.MSG_TIER_RET_ERROR, e);
-        } catch (XMLStreamException e) {
-            log.error(APIConstants.MSG_MALFORMED_XML_ERROR, e);
-            throw new APIManagementException(APIConstants.MSG_MALFORMED_XML_ERROR, e);
         }
     }
 
@@ -1695,9 +1692,6 @@ public final class APIUtil {
         } catch (RegistryException e) {
             log.error(APIConstants.MSG_TIER_RET_ERROR, e);
             throw new APIManagementException(APIConstants.MSG_TIER_RET_ERROR, e);
-        } catch (XMLStreamException e) {
-            log.error(APIConstants.MSG_MALFORMED_XML_ERROR, e);
-            throw new APIManagementException(APIConstants.MSG_MALFORMED_XML_ERROR, e);
         } finally {
             if (isTenantFlowStarted) {
                 PrivilegedCarbonContext.endTenantFlow();
@@ -1841,16 +1835,22 @@ public final class APIUtil {
      * @param registry     registry to access tiers config
      * @param tierLocation registry location of tiers config
      * @return map containing available tiers
-     * @throws RegistryException      when registry action fails
-     * @throws XMLStreamException     when xml parsing fails
      * @throws APIManagementException when fails to retrieve tier attributes
      */
-    private static Map<String, Tier> getTiers(Registry registry, String tierLocation)
-            throws RegistryException, XMLStreamException, APIManagementException {
-        Map<String, Tier> tiers = getAllTiers(registry, tierLocation);
+    private static Map<String, Tier> getTiers(Registry registry, String tierLocation) throws APIManagementException {
+        Map<String, Tier> tiers = null;
         try {
+            tiers = getAllTiers(registry, tierLocation);
             tiers.remove(APIConstants.UNAUTHENTICATED_TIER);
+        } catch (RegistryException e) {
+            handleException(APIConstants.MSG_TIER_RET_ERROR, e);
+        } catch (XMLStreamException e) {
+            handleException(APIConstants.MSG_MALFORMED_XML_ERROR, e);
+        } catch (APIManagementException e) {
+            handleException("Unable to get tier attributes", e);
         } catch (Exception e) {
+
+            // generic exception is caught to catch exceptions thrown from map remove method
             handleException("Unable to remove Unauthenticated tier from tiers list", e);
         }
         return tiers;
@@ -2231,24 +2231,6 @@ public final class APIUtil {
             throw new APIManagementException(msg, e);
         }
         return api;
-    }
-
-
-    /**
-     * Gets the List of Authorized Domains by consumer key.
-     *
-     * @param consumerKey
-     * @return
-     * @throws APIManagementException
-     */
-    public static List<String> getListOfAuthorizedDomainsByConsumerKey(String consumerKey)
-            throws APIManagementException {
-        String list = ApiMgtDAO.getInstance().getAuthorizedDomainsByConsumerKey(consumerKey);
-        if (list != null && !list.isEmpty()) {
-            return Arrays.asList(list.split(","));
-        }
-
-        return null;
     }
 
     public static boolean checkAccessTokenPartitioningEnabled() {
@@ -3290,7 +3272,7 @@ public final class APIUtil {
         try {
             APIManagerConfiguration config = ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService()
                     .getAPIManagerConfiguration();
-            String serviceURL = config.getFirstProperty(APIConstants.API_GATEWAY_KEY_CACHE_ENABLED);
+            String serviceURL = config.getFirstProperty(APIConstants.GATEWAY_TOKEN_CACHE_ENABLED);
             return Boolean.parseBoolean(serviceURL);
         } catch (Exception e) {
             log.error("Did not found valid API Validation Information cache configuration. Use default configuration"
@@ -3635,7 +3617,7 @@ public final class APIUtil {
         APIManagerConfiguration config = ServiceReferenceHolder.getInstance().
                 getAPIManagerConfigurationService().getAPIManagerConfiguration();
 
-        if (Boolean.parseBoolean(config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_ENCRYPT_TOKENS))) {
+        if (Boolean.parseBoolean(config.getFirstProperty(APIConstants.ENCRYPT_TOKENS_ON_PERSISTENCE))) {
             return new String(CryptoUtil.getDefaultCryptoUtil().base64DecodeAndDecrypt(token), Charset.defaultCharset());
         }
         return token;
@@ -3649,7 +3631,7 @@ public final class APIUtil {
         APIManagerConfiguration config = ServiceReferenceHolder.getInstance().
                 getAPIManagerConfigurationService().getAPIManagerConfiguration();
 
-        if (Boolean.parseBoolean(config.getFirstProperty(APIConstants.API_KEY_VALIDATOR_ENCRYPT_TOKENS))) {
+        if (Boolean.parseBoolean(config.getFirstProperty(APIConstants.ENCRYPT_TOKENS_ON_PERSISTENCE))) {
             return CryptoUtil.getDefaultCryptoUtil().encryptAndBase64Encode(token.getBytes(Charset.defaultCharset()));
         }
         return token;
@@ -4222,22 +4204,6 @@ public final class APIUtil {
         } catch (Exception e) {
             log.error("Error while creating axis configuration for tenant " + tenantDomain, e);
         }
-    }
-
-    public static void checkClientDomainAuthorized(APIKeyValidationInfoDTO apiKeyValidationInfoDTO, String clientDomain)
-            throws APIManagementException {
-        if (clientDomain != null) {
-            clientDomain = clientDomain.trim();
-        }
-        List<String> authorizedDomains = apiKeyValidationInfoDTO.getAuthorizedDomains();
-        if (authorizedDomains != null && !(authorizedDomains.contains("ALL") || authorizedDomains.contains(clientDomain)
-        )) {
-            log.error("Unauthorized client domain :" + clientDomain +
-                    ". Only \"" + authorizedDomains + "\" domains are authorized to access the API.");
-            throw new APIManagementException("Unauthorized client domain :" + clientDomain +
-                    ". Only \"" + authorizedDomains + "\" domains are authorized to access the API.");
-        }
-
     }
 
     public static String extractCustomerKeyFromAuthHeader(Map headersMap) {
@@ -4951,7 +4917,7 @@ public final class APIUtil {
                     getAPIManagerConfigurationService().getAPIManagerConfiguration();
 
             // Read scope whitelist from Configuration.
-            List<String> whitelist = configuration.getProperty(APIConstants.API_KEY_MANGER_SCOPE_WHITELIST);
+            List<String> whitelist = configuration.getProperty(APIConstants.WHITELISTED_SCOPES);
 
             // If whitelist is null, default scopes will be put.
             if (whitelist == null) {
@@ -4969,6 +4935,69 @@ public final class APIUtil {
             }
         }
         return false;
+    }
+
+    public static String getServerURL() throws APIManagementException{
+        String hostName = ServerConfiguration.getInstance().getFirstProperty(APIConstants.HOST_NAME);
+
+        try {
+            if (hostName == null) {
+                hostName = NetworkUtils.getLocalHostname();
+            }
+        } catch (SocketException e) {
+            throw new APIManagementException("Error while trying to read hostname.", e);
+        }
+
+        String mgtTransport = CarbonUtils.getManagementTransport();
+        AxisConfiguration axisConfiguration = ServiceReferenceHolder
+                .getContextService().getServerConfigContext().getAxisConfiguration();
+        int mgtTransportPort = CarbonUtils.getTransportProxyPort(axisConfiguration, mgtTransport);
+        if (mgtTransportPort <= 0) {
+            mgtTransportPort = CarbonUtils.getTransportPort(axisConfiguration, mgtTransport);
+        }
+        String serverUrl = mgtTransport + "://" + hostName.toLowerCase();
+        // If it's well known HTTPS port, skip adding port
+        if (mgtTransportPort != APIConstants.DEFAULT_HTTPS_PORT) {
+            serverUrl += ":" + mgtTransportPort;
+        }
+        // If ProxyContextPath is defined then append it
+        String proxyContextPath = ServerConfiguration.getInstance().getFirstProperty(APIConstants.PROXY_CONTEXT_PATH);
+        if (proxyContextPath != null && !proxyContextPath.trim().isEmpty()) {
+            if (proxyContextPath.charAt(0) == '/') {
+                serverUrl += proxyContextPath;
+            } else {
+                serverUrl += "/" + proxyContextPath;
+            }
+        }
+
+        return serverUrl;
+    }
+
+    /**
+     * Extract the provider of the API from name
+     *
+     * @param apiVersion - API Name with version
+     * @param tenantDomain - tenant domain of the API
+     * @return API publisher name
+     */
+    public static String getAPIProviderFromRESTAPI(String apiVersion, String tenantDomain) {
+        int index = apiVersion.indexOf("--");
+        if(StringUtils.isEmpty(tenantDomain)){
+            tenantDomain = org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
+        }
+        String apiProvider;
+        if (index != -1) {
+            apiProvider = apiVersion.substring(0, index);
+            if (apiProvider.contains(APIConstants.EMAIL_DOMAIN_SEPARATOR_REPLACEMENT)) {
+                apiProvider = apiProvider.replace(APIConstants.EMAIL_DOMAIN_SEPARATOR_REPLACEMENT,
+                        APIConstants.EMAIL_DOMAIN_SEPARATOR);
+            }
+            if (!apiProvider.endsWith(tenantDomain)) {
+                apiProvider = apiProvider + '@' + tenantDomain;
+            }
+            return apiProvider;
+        }
+        return null;
     }
 
     /**
@@ -5038,16 +5067,6 @@ public final class APIUtil {
     }
 
     /**
-     * Used to return analytic enabled from the configuration
-     *
-     * @return true if analytics enabled in analytic configuration
-     */
-    public static boolean isStatsEnabled() {
-        return ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().
-                getAPIAnalyticsConfiguration().isAnalyticsEnabled();
-    }
-
-    /**
      * Used to get access control allowed origins define in api-manager.xml
      *
      * @return allow origins list defined in api-manager.xml
@@ -5087,63 +5106,66 @@ public final class APIUtil {
         return new CORSConfiguration(false, allowOriginsStringSet, false, allowHeadersStringSet, allowMethodsStringSet);
     }
 
-    public static String getServerURL() throws APIManagementException{
-        String hostName = ServerConfiguration.getInstance().getFirstProperty(APIConstants.HOST_NAME);
-
-        try {
-            if (hostName == null) {
-                hostName = NetworkUtils.getLocalHostname();
-            }
-        } catch (SocketException e) {
-            throw new APIManagementException("Error while trying to read hostname.", e);
+    /**
+     * Used to get API name from synapse API Name
+     * @param api_version API name from synapse configuration
+     * @return api name according to the tenant
+     */
+    public static String getAPINamefromRESTAPI(String api_version) {
+        int index = api_version.indexOf("--");
+        String api;
+        if (index != -1) {
+            api_version = api_version.substring(index + 2);
         }
-
-        String mgtTransport = CarbonUtils.getManagementTransport();
-        AxisConfiguration axisConfiguration = ServiceReferenceHolder
-                .getContextService().getServerConfigContext().getAxisConfiguration();
-        int mgtTransportPort = CarbonUtils.getTransportProxyPort(axisConfiguration, mgtTransport);
-        if (mgtTransportPort <= 0) {
-            mgtTransportPort = CarbonUtils.getTransportPort(axisConfiguration, mgtTransport);
+        api = api_version.split(":")[0];
+        index = api.indexOf("--");
+        if (index != -1) {
+            api = api.substring(index + 2);
         }
-        String serverUrl = mgtTransport + "://" + hostName.toLowerCase();
-        // If it's well known HTTPS port, skip adding port
-        if (mgtTransportPort != APIConstants.DEFAULT_HTTPS_PORT) {
-            serverUrl += ":" + mgtTransportPort;
-        }
-        // If ProxyContextPath is defined then append it
-        String proxyContextPath = ServerConfiguration.getInstance().getFirstProperty(APIConstants.PROXY_CONTEXT_PATH);
-        if (proxyContextPath != null && !proxyContextPath.trim().isEmpty()) {
-            if (proxyContextPath.charAt(0) == '/') {
-                serverUrl += proxyContextPath;
-            } else {
-                serverUrl += "/" + proxyContextPath;
-            }
-        }
-
-        return serverUrl;
+        return api;
     }
 
     /**
-     * Extract the provider of the API from name
-     *
-     * @param apiVersion - API Name with version
-     * @param tenantDomain - tenant domain of the API
-     * @return API publisher name
+     * @param agent value "p" for publisher value "s" for subscriber value "a" for admin
+     * Return all alert types.
+     * @return Hashmap of alert types.
+     * @throws APIManagementException
      */
-    public static String getAPIProviderFromRESTAPI(String apiVersion, String tenantDomain) {
-        int index = apiVersion.indexOf("--");
-        String apiProvider;
-        if (index != -1) {
-            apiProvider = apiVersion.substring(0, index);
-            if (apiProvider.contains(APIConstants.EMAIL_DOMAIN_SEPARATOR_REPLACEMENT)) {
-                apiProvider = apiProvider.replace(APIConstants.EMAIL_DOMAIN_SEPARATOR_REPLACEMENT,
-                        APIConstants.EMAIL_DOMAIN_SEPARATOR);
-            }
-            if (!apiProvider.endsWith(tenantDomain)) {
-                apiProvider = apiProvider + '@' + tenantDomain;
-            }
-            return apiProvider;
-        }
-        return null;
+    public static HashMap<Integer, String> getAllAlertTypeByAgent(String agent) throws APIManagementException {
+        HashMap<Integer, String> map;
+        map = ApiMgtDAO.getInstance().getAllAlertTypesByAgent(agent);
+        return map;
     }
+
+    /**
+     *
+     * @param userName user name with tenant domain ex: admin@carbon.super
+     * @param agent value "p" for publisher value "s" for subscriber value "a" for admin
+     * @return map of saved values of alert types.
+     * @throws APIManagementException
+     */
+    public static List<Integer> getSavedAlertTypesIdsByUserNameAndAgent(String userName,String agent) throws  APIManagementException{
+
+        List<Integer> list;
+        list = ApiMgtDAO.getInstance().getSavedAlertTypesIdsByUserNameAndAgent(userName,agent);
+        return  list;
+
+    }
+
+    /**
+     * This util method retrieves saved email list by user and agent name
+     * @param userName user name with tenant ID.
+     * @param agent if its publisher values should "p", if it is store value is "s" if admin dashboard value is "a"
+     * @return List of eamil list.
+     * @throws APIManagementException
+     */
+    public static List<String> retrieveSavedEmailList(String userName, String agent) throws APIManagementException{
+
+        List<String> list;
+        list = ApiMgtDAO.getInstance().retrieveSavedEmailList(userName,agent);
+
+        return list;
+    }
+
+
 }

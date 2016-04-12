@@ -12,6 +12,8 @@
     "appCreation": "Application Creation",
     "appRegistration": "Application Registration",
     "themeupload":"Upload Tenant Theme",
+    "manageTier": "Manage Tiers",
+    "addTier": "Add New Tier",
 
     "username": "Username",
     "password": "Password",
@@ -45,6 +47,7 @@
     "settings":"Settings",
 
     "tierManagement":"Throttling Tiers",
+    "manageAlertTypes" : "Manage Alert Types",
     "tierName":"Name",
     "tierAddTitle":"Add Tier",
     "tierEditTitle":"Edit Tier",
@@ -62,6 +65,37 @@
     "cancelTier":"Cancel",
     "errorMsgRequired":"Required",
     "errorMessageInvalid":"Invalid",
-    "errorMessageIllegalChar" : "Name contains one or more illegal characters ( [ ~ ! & @ # ; % ^ * + = { } | <> \"  , ] )."
+    "errorMessageIllegalChar" : "Name contains one or more illegal characters ( [ ~ ! & @ # ; % ^ * + = { } | <> \"  , ] ).",
+    "tierPermissions":"Tier Permissions",
+    "tiers":"Tier",
+    "permissions":"Permissions",
+    "allow":"Allow",
+    "deny":"Deny",
+    
+    "alerts":"Configure Alerts",
+    "templateName":"Template Name",
+    "configName":"Configuration Name",
+    "description":"Description",
+    "addConfiguration":"Add Configuration",
+    "editConfigurations":"Edit Configurations",
+    "domainTableColumnName":"Configuration Name",
+    "domainTableColumnDescription":"Description",
+    "templateType":"Template Type",
+    "actions":"Actions",
+    "common.button.edit":"Edit",
+    "common.button.delete":"Delete",
+     "schedulerConfiguration":"Scheduler Configuration",
+    "cronExpression":"Cron Expression",
+    "domains":"Domains",
+
+    "abnormalBackendTime": "Abnormal backend time",
+    "abnormalResponseTime":"Abnormal response time",
+    "abnormalRequestsPerMin":"Abnormal request counts",
+    "RequestPatternChanged":"Abnormal resource access pattern",
+    "UnusualIPAccessAlert":"Unseen source IP access",
+    "AbnormalRefreshAlert":"Abnormal renewal of access tokens",
+    "FrequentTierHittingAlert":"Frequent tier limit hitting",
+    "AbnormalTierUsage":"Abnormal API usage",
+    "healthAvailabilityPerMin":"Availability of APIs"
 
 }

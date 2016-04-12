@@ -24,6 +24,21 @@ $(document).ready(function() {
         validInput(docId, 'Duplicate Document Name.', errorCondition);
 
     });
+    
+    $('#docTable').datatables_extended({
+	     "fnDrawCallback": function(){
+	       if(this.fnSettings().fnRecordsDisplay()<=$("#docTable_length option:selected" ).val()
+	     || $("#docTable option:selected" ).val()==-1)
+	       $('#docTable_paginate').hide();
+	       else $('#docTable_paginate').show();
+	     } ,
+        "aoColumns": [
+        null,
+        null,
+        null,
+        { "bSortable": false }
+        ]
+	});
 
 
 });
@@ -233,7 +248,7 @@ var saveDoc=function(){
 
         if (sourceType == 'file') {
 
-            var fileExtension = getExtension($("#docLocation").val());
+            var fileExtension = getExtension($("#docName").val());
 
             var mimeType = getMimeType(fileExtension);
 
@@ -272,7 +287,7 @@ var saveDoc=function(){
                 .attr('name', 'newType').attr('value', $('#specifyBox').val()).prependTo('#addNewDoc');
         }
         if($('#saveDocBtn').val() == "Update"){
-            var fileNameToBeUpload = getFileName($("#docLocation").val());
+            var fileNameToBeUpload = $("#docName").val();
             if(getFileName($("#docLocation").val()) == $("#fileNameDiv").html()){
                 jagg.message({
                     content:"There is a file named "+fileNameToBeUpload+" with the same name. You are going to" +

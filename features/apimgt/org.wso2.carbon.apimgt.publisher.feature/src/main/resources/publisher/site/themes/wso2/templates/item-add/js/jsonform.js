@@ -197,7 +197,7 @@ jsonform.fieldTemplate = function(inner) {
     '">' +
     '<% if (node.title && !elt.notitle) { %>' +
       '<label class="col-sm-3 control-label" for="<%= node.id %>"><%= node.title %>' + 
-      '<a class="help_popup" help_data="test_help" data-trigger="hover" data-original-title="" title=""> <i class="fa fa-question-circle" data-original-title="" title=""></i></a>'+
+      '<a class="help_popup" help_data="test_help" data-trigger="hover" data-original-title="" title=""> <span class="icon fw-stack fw-lg" style="font-size:6px"><i class="fw fw-circle fw-stack-2x"></i><i class="fw fw-question fw-stack-1x fw-inverse" style="font-size:8px"></i></span></a>'+
       '</label>' +
     '<% } %>' +
     '<div class="col-sm-9">' +
@@ -224,12 +224,12 @@ jsonform.fieldTemplate = function(inner) {
 
 var fileDisplayTemplate = '<div class="_jsonform-preview">' +
   '<% if (value.type=="image") { %>' +
-  '<img class="jsonform-preview" id="jsonformpreview-<%= id %>" src="<%= value.url %>" />' +
+  '<img class="jsonform-preview" id="jsonformpreview-<%= id %>" src="<%= value.url %>" alt="<%=i18n.localize("jsonFilePreview")%>" />' +
   '<% } else { %>' +
-  '<a href="<%= value.url %>"><%= value.name %></a> (<%= Math.ceil(value.size/1024) %>kB)' +
+  '<a href="<%= value.url %>" title="<%=i18n.localize("jsonFilePreview")%>"><%= value.name %></a> (<%= Math.ceil(value.size/1024) %>kB)' +
   '<% } %>' +
   '</div>' +
-  '<a href="#" class="btn _jsonform-delete"><i class="glyphicon glyphicon-remove" title="Remove"></i></a> ';
+  '<a href="#" class="btn _jsonform-delete" title="<%=i18n.localize("deleteButton")%>"><i class="glyphicon glyphicon-remove" title="Remove"></i></a> ';
 
 var inputFieldTemplate = function (type) {
   return {
@@ -348,8 +348,8 @@ jsonform.elementTypes = {
       '<%= (node.schemaElement && node.schemaElement.required && (node.schemaElement.type !== "boolean") ? " required=\'required\'" : "") %>' +
       'placeholder="E.g.: http://appserver/resource"' +
       ' />'+
-      '<div class="btn-group"><button class="btn btn-default advance_endpoint_config" type="button" field-name="<%= node.name %>">Advanced Options</button>'+
-      '<button class="btn btn-default check_url_valid" type="button" providerName="<%= apiProvider%>" apiName="<%= apiName%>" apiVersion="<%= apiVersion %>" >Test</button></div>'+
+      '<div class="btn-group"><button class="btn btn-secondary advance_endpoint_config" type="button" field-name="<%= node.name %>">Advanced Options</button>'+
+      '<button class="btn btn-secondary check_url_valid" type="button" providerName="<%= apiProvider%>" apiName="<%= apiName%>" apiVersion="<%= apiVersion %>" >Test</button></div>'+
       '<div id="test_help" class="hide"><p>WSO2 API Manager uses HTTP Head to check the validity of the endpoint.</p></div>' +
       '</div>',
     'fieldtemplate': true,
@@ -663,7 +663,7 @@ jsonform.elementTypes = {
       '<input type="hidden" name="<%= node.name %>" id="<%= node.id %>" value="<%= value %>" />' +
       '<div class="dropdown">' +
       '<a class="btn<% if (buttonClass && node.value) { %> <%= buttonClass %><% } %>" data-toggle="dropdown" href="#"<% if (node.value) { %> style="max-width:<%= width %>px;max-height:<%= height %>px"<% } %>>' +
-        '<% if (node.value) { %><img src="<% if (!node.value.match(/^https?:/)) { %><%= prefix %><% } %><%= node.value %><%= suffix %>" alt="" /><% } else { %><%= buttonTitle %><% } %>' +
+        '<% if (node.value) { %><img src="<% if (!node.value.match(/^https?:/)) { %><%= prefix %><% } %><%= node.value %><%= suffix %>" alt="<%= node.value %>" /><% } else { %><%= buttonTitle %><% } %>' +
       '</a>' +
       '<div class="dropdown-menu navbar" id="<%= node.id %>_dropdown">' +
         '<div>' +
@@ -718,7 +718,7 @@ jsonform.elementTypes = {
           $(node.el).find('a[data-toggle="dropdown"]')
             .addClass(elt.imageButtonClass)
             .attr('style', 'max-width:' + width + 'px;max-height:' + height + 'px')
-            .html('<img src="' + (!value.match(/^https?:/) ? prefix : '') + value + suffix + '" alt="" />');
+            .html('<img src="' + (!value.match(/^https?:/) ? prefix : '') + value + suffix + '" alt="'+value+'" />');
         }
         else {
           $(node.el).find('input').attr('value', '');

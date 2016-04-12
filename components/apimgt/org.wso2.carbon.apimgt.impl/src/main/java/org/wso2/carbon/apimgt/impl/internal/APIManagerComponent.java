@@ -45,6 +45,7 @@ import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.context.RegistryType;
+import org.wso2.carbon.event.output.adapter.core.OutputEventAdapterService;
 import org.wso2.carbon.governance.api.util.GovernanceConstants;
 import org.wso2.carbon.registry.api.Collection;
 import org.wso2.carbon.registry.api.Registry;
@@ -104,7 +105,11 @@ import java.util.List;
  * unbind="unsetTenantRegistryLoader"
  * @scr.reference name="tenant.indexloader"
  * interface="org.wso2.carbon.registry.indexing.service.TenantIndexingLoader" cardinality="1..1" policy="dynamic"
- * bind="setIndexLoader" unbind="unsetIndexLoader" *
+ * bind="setIndexLoader" unbind="unsetIndexLoader"
+ * @scr.reference name="event.output.adapter.service"
+ * interface="org.wso2.carbon.event.output.adapter.core.OutputEventAdapterService"
+ * cardinality="1..1" policy="dynamic"  bind="setOutputEventAdapterService"
+ * unbind="unsetOutputEventAdapterService"
  */
 public class APIManagerComponent {
     //TODO refactor caching implementation
@@ -190,8 +195,6 @@ public class APIManagerComponent {
                                                         UserMgtConstants.EXECUTE_ACTION, null);
 
             setupImagePermissions();
-//            RemoteAuthorizationManager authorizationManager = RemoteAuthorizationManager.getInstance();
-//            authorizationManager.init();
             APIMgtDBUtil.initialize();
             //Load initially available api contexts at the server startup. This Cache is only use by the products other than the api-manager
             /* TODO: Load Config values from apimgt.core*/
@@ -205,12 +208,13 @@ public class APIManagerComponent {
                 }
             }
             APIUtil.createSelfSignUpRoles(MultitenantConstants.SUPER_TENANT_ID);
-            APIUtil.addBamServerProfile(analyticsConfiguration.getDasServerUrl(), analyticsConfiguration
-                    .getDasServerUser(), analyticsConfiguration.getDasServerPassword(), MultitenantConstants
-                    .SUPER_TENANT_ID);
+            if (analyticsConfiguration.isAnalyticsEnabled()){
+                APIUtil.addBamServerProfile(analyticsConfiguration.getDasServerUrl(), analyticsConfiguration
+                        .getDasServerUser(), analyticsConfiguration.getDasServerPassword(), MultitenantConstants
+                        .SUPER_TENANT_ID);
+            }
             // Initialise KeyManager.
             KeyManagerHolder.initializeKeyManager(configuration);
-            
         } catch (APIManagementException e) {
             log.error("Error while initializing the API manager component", e);
         }
@@ -533,4 +537,21 @@ public class APIManagerComponent {
     }
 
 
+    /**
+     * Initialize the Output EventAdapter Service dependency
+     *
+     * @param outputEventAdapterService Output EventAdapter Service reference
+     */
+    protected void setOutputEventAdapterService(OutputEventAdapterService outputEventAdapterService){
+        ServiceReferenceHolder.getInstance().setOutputEventAdapterService(outputEventAdapterService);
+    }
+
+    /**
+     *  De-reference the Output EventAdapter Service dependency.
+     *
+     * @param outputEventAdapterService
+     */
+    protected void unsetOutputEventAdapterService(OutputEventAdapterService outputEventAdapterService){
+        ServiceReferenceHolder.getInstance().setOutputEventAdapterService(null);
+    }
 }
